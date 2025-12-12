@@ -82,7 +82,7 @@ namespace PhoneNumbers
      *
      * @author Shaopeng Jia
      */
-    public class PhoneNumberOfflineGeocoder
+    public class PhoneNumberOfflineGeocoder : IDisposable
     {
         private static PhoneNumberOfflineGeocoder instance = null;
         private const String MAPPING_DATA_DIRECTORY = "res.prod_";
@@ -353,6 +353,37 @@ namespace PhoneNumbers
             // - Japanese
             // - Korean
             return !lang.Equals("zh") && !lang.Equals("ja") && !lang.Equals("ko");
+        }
+
+        private bool disposed = false;
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                if (disposing)
+                {
+                    if (availablePhonePrefixMaps != null)
+                    {
+                        foreach (var map in availablePhonePrefixMaps.Values)
+                        {
+                            if (map != null)
+                            {
+                                map.Dispose();
+                            }
+                        }
+                        availablePhonePrefixMaps.Clear();
+                        availablePhonePrefixMaps = null;
+                    }
+                }
+                disposed = true;
+            }
         }
 
     }

@@ -28,13 +28,14 @@ namespace PhoneNumbers
     *
     * @author Philippe Liard
     */
-    public class FlyweightMapStorage : AreaCodeMapStorageStrategy
+    public class FlyweightMapStorage : AreaCodeMapStorageStrategy, IDisposable
     {
-        class ByteBuffer
+        class ByteBuffer : IDisposable
         {
             private MemoryStream stream;
             private BinaryReader reader;
             private BinaryWriter writer;
+            private bool disposed = false;
 
             public ByteBuffer(int size)
             {
@@ -70,6 +71,38 @@ namespace PhoneNumbers
             public int getCapacity()
             {
                 return stream.Capacity;
+            }
+
+            public void Dispose()
+            {
+                Dispose(true);
+                GC.SuppressFinalize(this);
+            }
+
+            protected virtual void Dispose(bool disposing)
+            {
+                if (!disposed)
+                {
+                    if (disposing)
+                    {
+                        if (writer != null)
+                        {
+                            writer.Dispose();
+                            writer = null;
+                        }
+                        if (reader != null)
+                        {
+                            reader.Dispose();
+                            reader = null;
+                        }
+                        if (stream != null)
+                        {
+                            stream.Dispose();
+                            stream = null;
+                        }
+                    }
+                    disposed = true;
+                }
             }
         }
 
@@ -211,6 +244,35 @@ namespace PhoneNumbers
         {
             index *= wordSize;
             return wordSize == SHORT_NUM_BYTES ? buffer.getShort(index) : buffer.getInt(index);
+        }
+
+        private bool disposed = false;
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                if (disposing)
+                {
+                    if (phoneNumberPrefixes != null)
+                    {
+                        phoneNumberPrefixes.Dispose();
+                        phoneNumberPrefixes = null;
+                    }
+                    if (descriptionIndexes != null)
+                    {
+                        descriptionIndexes.Dispose();
+                        descriptionIndexes = null;
+                    }
+                }
+                disposed = true;
+            }
         }
     }
 }

@@ -26,7 +26,7 @@ namespace PhoneNumbers
     *
     * @author Shaopeng Jia
     */
-    public class AreaCodeMap
+    public class AreaCodeMap : IDisposable
     {
         private readonly PhoneNumberUtil phoneUtil = PhoneNumberUtil.GetInstance();
 
@@ -79,8 +79,26 @@ namespace PhoneNumbers
             AreaCodeMapStorageStrategy defaultMapStorage = createDefaultMapStorage();
             int sizeOfDefaultMapStorage = getSizeOfAreaCodeMapStorage(defaultMapStorage, areaCodeMap);
 
-            return sizeOfFlyweightMapStorage < sizeOfDefaultMapStorage
-                ? flyweightMapStorage : defaultMapStorage;
+            if (sizeOfFlyweightMapStorage < sizeOfDefaultMapStorage)
+            {
+                // Dispose the unused storage strategy to prevent memory leaks
+                var disposable = defaultMapStorage as IDisposable;
+                if (disposable != null)
+                {
+                    disposable.Dispose();
+                }
+                return flyweightMapStorage;
+            }
+            else
+            {
+                // Dispose the unused storage strategy to prevent memory leaks
+                var disposable = flyweightMapStorage as IDisposable;
+                if (disposable != null)
+                {
+                    disposable.Dispose();
+                }
+                return defaultMapStorage;
+            }
         }
 
         /**
@@ -177,6 +195,34 @@ namespace PhoneNumbers
         public override String ToString()
         {
             return areaCodeMapStorage.ToString();
+        }
+
+        private bool disposed = false;
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                if (disposing)
+                {
+                    if (areaCodeMapStorage != null)
+                    {
+                        var disposable = areaCodeMapStorage as IDisposable;
+                        if (disposable != null)
+                        {
+                            disposable.Dispose();
+                        }
+                        areaCodeMapStorage = null;
+                    }
+                }
+                disposed = true;
+            }
         }
     }
 }
